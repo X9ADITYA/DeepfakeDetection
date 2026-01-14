@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Optional: Basic styling to make the app fill the viewport */
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+}
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
