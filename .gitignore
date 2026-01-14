@@ -54,3 +54,6 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+# PyTorch / ML models
+*.pth
+
