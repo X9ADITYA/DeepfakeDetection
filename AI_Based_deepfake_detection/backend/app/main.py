@@ -20,6 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+settings.static_root.mkdir(parents=True, exist_ok=True)
+settings.uploads_dir.mkdir(parents=True, exist_ok=True)
+settings.heatmaps_dir.mkdir(parents=True, exist_ok=True)
+
 app.mount("/static", StaticFiles(directory=str(settings.static_root)), name="static")
 
 predictor = DeepfakePredictor(settings)

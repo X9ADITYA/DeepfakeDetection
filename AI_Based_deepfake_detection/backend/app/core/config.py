@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     static_root: Path = Path("static")
     uploads_dir: Path = Path("static/uploads")
     heatmaps_dir: Path = Path("static/heatmaps")
-    model_backbone: str = "efficientnet-b4"
+    model_backbone: str = "efficientnet_b4"
+    model_backbone_label: str = "EfficientNet-B4"
     training_dataset: str = "FaceForensics++"
     evaluation_dataset: str = "Celeb-DF v2"
     cross_dataset_auc: float = 0.72
@@ -25,7 +26,7 @@ class Settings(BaseSettings):
     @property
     def model_metadata(self) -> dict[str, object]:
         return {
-            "backbone": self.model_backbone,
+            "backbone": self.model_backbone_label,
             "training_dataset": self.training_dataset,
             "evaluation_dataset": self.evaluation_dataset,
             "cross_dataset_auc": self.cross_dataset_auc,
