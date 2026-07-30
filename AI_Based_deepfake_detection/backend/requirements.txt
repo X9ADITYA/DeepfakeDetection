@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic-settings
+motor
+numpy
+opencv-python-headless
+Pillow
+torch
+torchvision
+timm
+facenet-pytorch
+grad-cam
+onnx
+onnxruntime
+python-dotenv
