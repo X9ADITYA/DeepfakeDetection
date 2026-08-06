@@ -10,6 +10,7 @@ from .core.config import Settings, get_settings, settings
 from .models.schemas import ModelTransparency, PredictResponse, ScanRecord
 from .services.history_repository import HistoryRepository
 from .services.predictor import DeepfakePredictor
+from .services.progress import progress_manager
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 app.add_middleware(
@@ -61,3 +62,18 @@ async def predict(file: UploadFile = File(...), x_session_id: str | None = Heade
 @app.get("/history", response_model=list[ScanRecord])
 async def history(limit: int = 50, x_session_id: str | None = Header(default=None, alias="X-Session-Id")) -> list[ScanRecord]:
     return await history_repository.list_recent(limit=limit, session_id=x_session_id)
+
+
+@app.get("/predict/{scan_id}/status")
+async def predict_status(scan_id: str):
+    status = progress_manager.get(scan_id)
+    if not status:
+        return {"status": "not_found"}
+    return {
+        "id": status.id,
+        "stage_index": status.stage_index,
+        "stage": status.stage,
+        "progress": status.progress,
+        "last_updated": status.last_updated.isoformat(),
+        "details": status.details,
+    }
