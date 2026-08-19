@@ -18,11 +18,18 @@ class HistoryRepository:
 
     async def connect(self) -> None:
         try:
-            self._client = AsyncIOMotorClient(self.settings.mongo_uri)
+            self._client = AsyncIOMotorClient(
+                self.settings.mongo_uri,
+                serverSelectionTimeoutMS=1500,
+                connectTimeoutMS=1500,
+            )
             database = self._client[self.settings.mongo_db]
             self._collection = database["scan_history"]
             await self._collection.create_index([("session_id", 1), ("created_at", -1)])
         except Exception:
+            if self._client is not None:
+                self._client.close()
+            self._client = None
             self._collection = None
 
     async def store(self, scan: PredictResponse) -> None:

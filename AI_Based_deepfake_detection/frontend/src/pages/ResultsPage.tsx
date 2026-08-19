@@ -4,12 +4,11 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 
 import { EvidenceOverlay } from '../components/EvidenceOverlay';
 import { useScan } from '../context/scan';
-import { modelTransparency } from '../lib/mockScan';
 import type { ScanResult } from '../lib/types';
 
 export function ResultsPage() {
   const navigate = useNavigate();
-  const { currentScan, history, setCurrentScan } = useScan();
+  const { currentScan, history, modelTransparency, setCurrentScan } = useScan();
   const scan = currentScan ?? history[0] ?? null;
 
   const chartData = useMemo(
@@ -103,19 +102,19 @@ export function ResultsPage() {
             <div className="mt-4 space-y-4 text-sm text-muted">
               <div>
                 <div className="mono-label">Backbone</div>
-                <div className="mt-1 text-text">{modelTransparency.backbone}</div>
+                <div className="mt-1 text-text">{modelTransparency?.backbone ?? 'Unavailable'}</div>
               </div>
               <div>
                 <div className="mono-label">Training dataset</div>
-                <div className="mt-1 text-text">{modelTransparency.training_dataset}</div>
+                <div className="mt-1 text-text">{modelTransparency?.training_dataset ?? 'Unavailable'}</div>
               </div>
               <div>
                 <div className="mono-label">Evaluation dataset</div>
-                <div className="mt-1 text-text">{modelTransparency.evaluation_dataset}</div>
+                <div className="mt-1 text-text">{modelTransparency?.evaluation_dataset ?? 'Unavailable'}</div>
               </div>
               <div>
                 <div className="mono-label">Cross-dataset AUC</div>
-                <div className="mt-1 font-mono text-2xl font-semibold text-text">{Math.round(modelTransparency.cross_dataset_auc * 100)}%</div>
+                <div className="mt-1 font-mono text-2xl font-semibold text-text">{modelTransparency ? `${Math.round(modelTransparency.cross_dataset_auc * 100)}%` : '--'}</div>
               </div>
             </div>
           </div>

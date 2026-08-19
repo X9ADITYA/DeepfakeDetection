@@ -1,15 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { fetchHistory } from '../lib/api';
+import { fetchHistory, fetchModelTransparency } from '../lib/api';
 import { addLocalHistory, loadLocalHistory } from '../lib/history';
 import { getSessionId } from '../lib/session';
-import type { ScanResult, UploadState } from '../lib/types';
+import type { ModelTransparency, ScanResult, UploadState } from '../lib/types';
 
 interface ScanContextValue {
   sessionId: string;
   uploadState: UploadState | null;
   currentScan: ScanResult | null;
   history: ScanResult[];
+  modelTransparency: ModelTransparency | null;
   setUploadState: (state: UploadState | null) => void;
   setCurrentScan: (scan: ScanResult | null) => void;
   saveScan: (scan: ScanResult) => void;
@@ -23,9 +24,11 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
   const [history, setHistory] = useState<ScanResult[]>(() => loadLocalHistory());
+  const [modelTransparency, setModelTransparency] = useState<ModelTransparency | null>(null);
 
   useEffect(() => {
     void refreshHistory();
+    void fetchModelTransparency().then(setModelTransparency).catch(() => setModelTransparency(null));
   }, [sessionId]);
 
   async function refreshHistory() {
@@ -49,11 +52,12 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     uploadState,
     currentScan,
     history,
+    modelTransparency,
     setUploadState,
     setCurrentScan,
     saveScan,
     refreshHistory,
-  }), [currentScan, history, sessionId, uploadState]);
+  }), [currentScan, history, modelTransparency, sessionId, uploadState]);
 
   return <ScanContext.Provider value={value}>{children}</ScanContext.Provider>;
 }

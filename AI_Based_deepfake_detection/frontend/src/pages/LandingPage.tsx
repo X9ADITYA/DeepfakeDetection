@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 
-import { modelTransparency } from '../lib/mockScan';
+import { useScan } from '../context/scan';
 
 export function LandingPage() {
+  const { modelTransparency } = useScan();
+
   return (
     <section className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr] lg:items-center">
       <div className="space-y-6">
@@ -40,19 +42,19 @@ export function LandingPage() {
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
             <div className="mono-label">Backbone</div>
-            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency.backbone}</div>
+            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency?.backbone ?? 'Loading...'}</div>
           </div>
           <div>
             <div className="mono-label">Training set</div>
-            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency.training_dataset}</div>
+            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency?.training_dataset ?? 'Loading...'}</div>
           </div>
           <div>
             <div className="mono-label">Eval set</div>
-            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency.evaluation_dataset}</div>
+            <div className="mt-2 text-lg font-semibold text-text">{modelTransparency?.evaluation_dataset ?? 'Loading...'}</div>
           </div>
           <div>
             <div className="mono-label">Cross-dataset AUC</div>
-            <div className="mt-2 font-mono text-3xl font-semibold text-accent">{Math.round(modelTransparency.cross_dataset_auc * 100)}%</div>
+            <div className="mt-2 font-mono text-3xl font-semibold text-accent">{modelTransparency ? `${Math.round(modelTransparency.cross_dataset_auc * 100)}%` : '--'}</div>
           </div>
         </div>
 
