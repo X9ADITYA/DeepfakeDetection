@@ -21,17 +21,17 @@
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #060912;
-  --color-surface: #0d1420;
-  --color-surface-alt: #121b2d;
-  --color-border: #233044;
-  --color-text: #e8eef8;
-  --color-muted: #93a4bc;
-  --color-accent: #4f74ff;
-  --color-accent-soft: rgba(79, 116, 255, 0.2);
-  --color-glow-blue: #3b82f6;
-  --color-glow-teal: #14b8a6;
-  --color-glow-violet: #7c6cff;
+  --color-bg: #070b16;
+  --color-surface: #111a2b;
+  --color-surface-alt: #192640;
+  --color-border: #304565;
+  --color-text: #f1f5ff;
+  --color-muted: #a5b5d0;
+  --color-accent: #6686ff;
+  --color-accent-soft: rgba(102, 134, 255, 0.24);
+  --color-glow-blue: #4d7cff;
+  --color-glow-teal: #20c7b2;
+  --color-glow-violet: #9a7cff;
 }
 
 @layer base {
@@ -45,8 +45,9 @@
     margin: 0;
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--color-glow-blue) 12%, transparent), transparent 28%),
-      radial-gradient(circle at top right, color-mix(in srgb, var(--color-glow-teal) 10%, transparent), transparent 26%),
+      radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--color-glow-blue) 20%, transparent), transparent 30%),
+      radial-gradient(circle at 92% 2%, color-mix(in srgb, var(--color-glow-teal) 15%, transparent), transparent 27%),
+      radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--color-glow-violet) 10%, transparent), transparent 34%),
       linear-gradient(180deg, color-mix(in srgb, var(--color-bg) 96%, white), var(--color-bg));
     color: var(--color-text);
   }
@@ -71,6 +72,36 @@
     border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
     background: color-mix(in srgb, var(--color-surface) 90%, transparent);
     @apply rounded-[1.25rem] shadow-glow backdrop-blur-xl;
+  }
+
+  [data-theme='dark'] .glass-card {
+    border-color: color-mix(in srgb, var(--color-border) 92%, transparent);
+    background:
+      linear-gradient(145deg, rgba(28, 43, 70, 0.84), rgba(13, 21, 37, 0.9)),
+      var(--color-surface);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(76, 124, 255, 0.06),
+      0 20px 70px rgba(0, 0, 0, 0.38),
+      0 0 44px rgba(62, 113, 255, 0.08);
+  }
+
+  [data-theme='dark'] .glass-card:hover {
+    border-color: color-mix(in srgb, var(--color-glow-blue) 48%, var(--color-border));
+  }
+
+  [data-theme='dark'] .glass-card .bg-surfaceAlt {
+    background: linear-gradient(135deg, rgba(28, 46, 77, 0.82), rgba(19, 31, 53, 0.92));
+    border-color: rgba(93, 128, 183, 0.34);
+  }
+
+  [data-theme='dark'] .glass-card .bg-surfaceAlt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(110deg, rgba(84, 126, 255, 0.08), transparent 42%, rgba(32, 199, 178, 0.05));
   }
 
   .panel-title {
