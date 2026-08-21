@@ -1,87 +1,163 @@
-# Deepfake Detection Platform
+# Deepfake Forensics Platform
 
-A full-stack deepfake video-first detector with a secondary single-image path that reuses the same forensic pipeline on a still frame.
+A full-stack web application for analyzing potentially manipulated images and videos. Upload media, inspect the forensic evidence overlay and confidence score, and review previous scans in the history view.
 
-## Product scope
+This application is currently a development scaffold. The backend uses trained model weights when they are available and falls back to a computer-vision heuristic when they are not. Results should not be treated as production-grade forensic conclusions until a trained and validated model is connected.
 
-- Upload a video or image.
-- See a live analyzing state with face detection, score movement, and pipeline logs.
-- Get a verdict, confidence score, and branded evidence overlay.
-- Review scan history backed by MongoDB.
+## Features
 
-## Stack
+- Image and video uploads.
+- Face detection and sampled video-frame analysis.
+- Real/fake verdict with a confidence score.
+- Heatmap evidence overlay for the analyzed frame.
+- Live processing stages and scan progress.
+- Per-frame scores for videos.
+- Session-scoped scan history stored in MongoDB.
+- Model transparency metadata in the frontend.
+- Light and dark themes.
 
-- Frontend: Vite, React 18, TypeScript, Tailwind CSS, Framer Motion, Recharts.
-- Backend: FastAPI, PyTorch, OpenCV, MTCNN, Grad-CAM, ONNX export path.
-- Database: MongoDB.
-- Deployment: Docker from day one for both services.
+## Architecture
 
-## Current scaffold
+```text
+React + Vite + TypeScript frontend
+				|
+				| HTTP / JSON and multipart uploads
+				v
+FastAPI inference backend ---- MongoDB scan history
+				|
+				+-- OpenCV face/frame processing
+				+-- PyTorch/timm model or ONNX Runtime
+				+-- Heatmap generation
+```
 
-This repository is set up as a monorepo with:
+## Technology stack
 
-- `frontend/` for the Vite SPA.
-- `backend/` for the FastAPI inference service.
-- `docker-compose.yml` for local service orchestration.
+- Frontend: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Recharts.
+- Backend: FastAPI, Uvicorn, Python 3.11, OpenCV, PyTorch, `timm`, FaceNet-PyTorch, Grad-CAM, ONNX Runtime.
+- Database: MongoDB 7.
+- Deployment: Docker Compose.
 
-## Design direction
+## Project structure
 
-### Token system
+```text
+AI_Based_deepfake_detection/
+├── backend/
+│   ├── app/
+│   │   ├── core/                 # Settings and environment configuration
+│   │   ├── models/               # Pydantic request/response schemas
+│   │   └── services/             # Prediction, face detection, heatmaps, history
+│   ├── static/uploads/           # Uploaded media (created at runtime)
+│   ├── static/heatmaps/          # Generated evidence images (created at runtime)
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/           # Shared UI components
+│   │   ├── context/              # Scan and theme state
+│   │   ├── lib/                  # API, session, types, and mock helpers
+│   │   └── pages/                # Landing, upload, processing, results, history
+│   ├── Dockerfile
+│   └── package.json
+└── docker-compose.yml
+```
 
-Light mode:
+## Run with Docker
 
-- Background: `#F5F7FB`
-- Surface: `#FFFFFF`
-- Surface alt: `#EEF2F7`
-- Border: `#D9E2EF`
-- Text: `#0F172A`
-- Muted text: `#64748B`
-- Accent: `#4156F6`
-- Accent soft: `#DCE3FF`
+From this directory, run:
 
-Dark mode:
+```powershell
+docker compose up --build
+```
 
-- Background: `#060912`
-- Surface: `#0D1420`
-- Surface alt: `#121B2D`
-- Border: `#233044`
-- Text: `#E8EEF8`
-- Muted text: `#93A4BC`
-- Glow blue: `#3B82F6`
-- Glow teal: `#14B8A6`
-- Glow violet: `#7C6CFF`
+Open the frontend at `http://localhost:5173` and the API at `http://localhost:8000`. The FastAPI interactive documentation is available at `http://localhost:8000/docs`.
 
-Typography:
+Stop the services with:
 
-- Display: `Fraunces`
-- Body: `IBM Plex Sans`
-- Mono: `IBM Plex Mono`
+```powershell
+docker compose down
+```
 
-Signature visual element:
+MongoDB data is stored in the `mongo_data` Docker volume. Remove it only when you intentionally want to delete scan history:
 
-- A branded evidence overlay for the heatmap layer, designed to look like a forensic annotation rather than a generic red Grad-CAM blob.
+```powershell
+docker compose down -v
+```
 
-### Analyzing screen plan
+## Run locally
 
-The processing view will combine four live panels:
+### Backend
 
-- The active frame with a bounding box and evidence overlay.
-- A confidence gauge that updates during the scan.
-- A frame progression / waveform strip.
-- A pipeline log that shows each stage of the analysis.
+Requires Python 3.11 or newer. From `backend/`:
 
-## Model choice for v1
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-- Backbone: EfficientNet-B4.
-- Training set: FaceForensics++.
-- Generalization eval target: Celeb-DF v2.
+The local backend expects MongoDB at `mongodb://localhost:27017` by default. Start MongoDB separately, or use the MongoDB service from Docker Compose.
 
-The backend exposes the model metadata so the frontend can surface the training and cross-dataset result in the Model Transparency panel.
+### Frontend
 
-## Local run targets
+From `frontend/`:
 
-The repo does not have dependencies installed yet. After the scaffold is in place:
+```powershell
+npm install
+npm run dev
+```
 
-- Frontend: `cd frontend && npm install && npm run dev`
-- Backend: `cd backend && python -m venv .venv && .venv\\Scripts\\activate && pip install -r requirements.txt && uvicorn app.main:app --reload`
-- Docker: `docker compose up --build`
+The frontend uses `http://localhost:8000` by default. Set `VITE_API_BASE_URL` before starting Vite to use another backend URL:
+
+```powershell
+$env:VITE_API_BASE_URL = "http://localhost:8000"
+npm run dev
+```
+
+Other frontend commands:
+
+```powershell
+npm run build
+npm run preview
+```
+
+## Configuration
+
+Backend settings can be supplied through environment variables or a `.env` file in `backend/`:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MONGO_URI` | `mongodb://localhost:27017` | MongoDB connection string |
+| `MONGO_DB` | `deepfake_scans` | MongoDB database name |
+| `CORS_ORIGINS` | `http://localhost:5173` | Allowed frontend origins |
+| `MODEL_BACKBONE` | `efficientnet_b4` | `timm` model name |
+| `CONFIDENCE_THRESHOLD` | `0.5` | Fake verdict threshold |
+
+Docker Compose sets the MongoDB connection and CORS origin for the container network.
+
+## Model weights
+
+The backend looks for optional weights under `backend/static/weights/`:
+
+- `efficientnet_b4.pt` for the PyTorch path.
+- `efficientnet_b4.onnx` for the ONNX Runtime fallback.
+
+When no compatible weights are present, the predictor uses its OpenCV-based heuristic adapter and includes a note in the result. The configured transparency metadata currently describes EfficientNet-B4, FaceForensics++, and Celeb-DF v2; these values should be updated when the final trained model is selected.
+
+## API endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/health` | Service health check |
+| `GET` | `/model-metadata` | Model and evaluation metadata |
+| `POST` | `/predict` | Analyze an uploaded image or video using `file` multipart data |
+| `GET` | `/predict/{scan_id}/status` | Read processing progress for a scan |
+| `GET` | `/history` | List recent scans for the current `X-Session-Id` |
+
+The prediction and history routes accept an optional `X-Session-Id` header. The frontend creates and reuses this identifier to keep browser history scoped to one session.
+
+## Development notes
+
+- Video files are sampled at up to eight frames rather than analyzed frame by frame.
+- Uploaded files and generated heatmaps are written to `backend/static/`.
+- The model adapter is intentionally replaceable; connect validated weights before using this system for real decisions.
