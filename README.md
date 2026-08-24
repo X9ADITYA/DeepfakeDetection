@@ -131,7 +131,7 @@ DeepFake-Detection/
 - Python
 - OpenCV
 - NumPy
-- TensorFlow / PyTorch *(depending on your implementation)*
+- TensorFlow / PyTorch *(depends on your implementation)*
 - Deep Learning
 
 ---
