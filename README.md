@@ -261,7 +261,7 @@ Display Result
 - ✅ Explainable AI (Grad-CAM)
 - ✅ Batch image prediction
 - ✅ Mobile application
-- ✅ Docker deployment
+- ✅ Docker deployment (still In Progress)
 - ✅ Cloud inference API
 - ✅ User prediction history
 - ✅ Model performance dashboard
