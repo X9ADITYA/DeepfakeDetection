@@ -26,6 +26,17 @@ export interface ScanResult {
   preview_url?: string;
 }
 
+export interface PredictionStatus {
+  id: string;
+  status: 'queued' | 'processing' | 'complete' | 'failed' | 'not_found';
+  stage_index: number;
+  stage: string | null;
+  progress: number;
+  last_updated: string;
+  details: Record<string, unknown>;
+  result: ScanResult | null;
+}
+
 export interface UploadState {
   file: File;
   previewUrl: string;

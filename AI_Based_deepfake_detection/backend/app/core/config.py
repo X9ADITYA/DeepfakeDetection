@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     static_root: Path = Field(default_factory=lambda: BACKEND_ROOT / "static")
     uploads_dir: Path = Field(default_factory=lambda: BACKEND_ROOT / "static" / "uploads")
     heatmaps_dir: Path = Field(default_factory=lambda: BACKEND_ROOT / "static" / "heatmaps")
+    weights_dir: Path = Field(default_factory=lambda: BACKEND_ROOT / "static" / "weights")
     model_backbone: str = "efficientnet_b4"
     model_backbone_label: str = "EfficientNet-B4"
     training_dataset: str = "FaceForensics++"

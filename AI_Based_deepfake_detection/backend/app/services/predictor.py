@@ -34,14 +34,14 @@ class BackboneInferencer:
                 import onnxruntime as ort
             except Exception:
                 return None
-            onnx_path = self.settings.static_root / "weights" / f"{self.settings.model_backbone}.onnx"
+            onnx_path = self.settings.weights_dir / f"{self.settings.model_backbone}.onnx"
             if onnx_path.exists():
                 self.onnx_session = ort.InferenceSession(str(onnx_path))
                 return None
             return None
 
         model = timm.create_model(self.settings.model_backbone, pretrained=False, num_classes=1)
-        weights_path = self.settings.static_root / "weights" / f"{self.settings.model_backbone}.pt"
+        weights_path = self.settings.weights_dir / f"{self.settings.model_backbone}.pt"
         if weights_path.exists():
             state_dict = torch.load(weights_path, map_location="cpu")
             model.load_state_dict(state_dict)

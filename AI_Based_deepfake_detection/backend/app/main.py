@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
@@ -24,6 +25,7 @@ app.add_middleware(
 settings.static_root.mkdir(parents=True, exist_ok=True)
 settings.uploads_dir.mkdir(parents=True, exist_ok=True)
 settings.heatmaps_dir.mkdir(parents=True, exist_ok=True)
+settings.weights_dir.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(settings.static_root)), name="static")
 
@@ -36,6 +38,7 @@ async def on_startup() -> None:
     settings.static_root.mkdir(parents=True, exist_ok=True)
     settings.uploads_dir.mkdir(parents=True, exist_ok=True)
     settings.heatmaps_dir.mkdir(parents=True, exist_ok=True)
+    settings.weights_dir.mkdir(parents=True, exist_ok=True)
     await history_repository.connect()
 
 
@@ -59,6 +62,28 @@ async def predict(file: UploadFile = File(...), x_session_id: str | None = Heade
     return result
 
 
+@app.post("/predict/start")
+async def predict_start(file: UploadFile = File(...), x_session_id: str | None = Header(default=None, alias="X-Session-Id")) -> dict[str, str]:
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="A file name is required")
+
+    job_id = file.filename or "scan"
+    job_id = f"{job_id}-{__import__('uuid').uuid4().hex}"
+    progress_manager.init(job_id, stage="Queued")
+
+    async def _run_job() -> None:
+        try:
+            progress_manager.update(job_id, status="processing", stage_index=0, stage="Uploading media", progress=5)
+            result = await predictor.predict(file, session_id=x_session_id)
+            progress_manager.set_result(job_id, result.model_dump())
+            await history_repository.store(result)
+        except Exception as exc:  # pragma: no cover - best effort guard
+            progress_manager.update(job_id, status="failed", stage="Error", progress=100, details={"error": str(exc)})
+
+    asyncio.create_task(_run_job())
+    return {"id": job_id, "status": "queued"}
+
+
 @app.get("/history", response_model=list[ScanRecord])
 async def history(limit: int = 50, x_session_id: str | None = Header(default=None, alias="X-Session-Id")) -> list[ScanRecord]:
     return await history_repository.list_recent(limit=limit, session_id=x_session_id)
@@ -71,9 +96,21 @@ async def predict_status(scan_id: str):
         return {"status": "not_found"}
     return {
         "id": status.id,
+        "status": status.status,
         "stage_index": status.stage_index,
         "stage": status.stage,
         "progress": status.progress,
         "last_updated": status.last_updated.isoformat(),
         "details": status.details,
+        "result": status.result,
     }
+
+
+@app.get("/predict/{scan_id}/result")
+async def predict_result(scan_id: str):
+    status = progress_manager.get(scan_id)
+    if not status:
+        raise HTTPException(status_code=404, detail="Prediction not found")
+    if status.status != "complete":
+        raise HTTPException(status_code=202, detail="Prediction still processing")
+    return status.result
