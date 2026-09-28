@@ -1,41 +1,63 @@
 # Deepfake Forensics Platform
 
-A full-stack web application for analyzing potentially manipulated images and videos. Upload media, inspect the forensic evidence overlay and confidence score, and review previous scans in the history view.
+A full-stack application for analyzing likely manipulated images and videos. The current project includes the full app flow from upload to analysis to results, with a backend inference scaffold, a live-processing UI, and scan history persistence.
 
-This application is currently a development scaffold. The backend uses trained model weights when they are available and falls back to a computer-vision heuristic when they are not. Results should not be treated as production-grade forensic conclusions until a trained and validated model is connected.
+This project is now beyond a pure scaffold. The app has working frontend/backend wiring, a progress-tracking flow, and a backend model loader that is ready for a real pretrained deepfake model. The next critical step is to replace the fallback heuristic with a trained real/fake classifier and validate it on a labeled dataset.
+
+## Current status
+
+Implemented so far:
+
+- Frontend app flow: landing, upload, processing, results, and history
+- React + Vite + TypeScript UI with light/dark theming
+- FastAPI backend with health, metadata, prediction, status, and history routes
+- Session-based scan history handling
+- Progress/job tracking for live processing updates
+- Face extraction and sampled frame analysis pipeline
+- Heatmap rendering and evidence overlay support
+- Model artifact path setup for weights and ONNX export
+- Training scaffold for a pretrained timm-based deepfake classifier
+
+Still required before the project is a trustworthy detector:
+
+- real dataset download and labeling
+- pretrained backbone fine-tuning for fake-vs-real classification
+- validation on a real deepfake dataset
+- model export to ONNX and backend integration
+- end-to-end testing with real image/video samples
 
 ## Features
 
-- Image and video uploads.
-- Face detection and sampled video-frame analysis.
-- Real/fake verdict with a confidence score.
-- Heatmap evidence overlay for the analyzed frame.
-- Live processing stages and scan progress.
-- Per-frame scores for videos.
-- Session-scoped scan history stored in MongoDB.
-- Model transparency metadata in the frontend.
-- Light and dark themes.
+- Image and video upload workflow
+- Face detection and sampled video-frame analysis
+- Live processing progress and job status polling
+- Real/fake verdict with confidence metrics
+- Evidence overlay and heatmap visualization
+- Session-scoped scan history in MongoDB or local fallback mode
+- Model transparency panel in the frontend
+- Light and dark UI themes
 
 ## Architecture
 
 ```text
 React + Vite + TypeScript frontend
-				|
-				| HTTP / JSON and multipart uploads
-				v
-FastAPI inference backend ---- MongoDB scan history
-				|
-				+-- OpenCV face/frame processing
-				+-- PyTorch/timm model or ONNX Runtime
-				+-- Heatmap generation
+        |
+        | HTTP / JSON and multipart uploads
+        v
+FastAPI backend ---- MongoDB history
+        |
+        +-- OpenCV frame handling and face extraction
+        +-- PyTorch/timm pretrained backbone workflow
+        +-- ONNX export path for deployment
+        +-- Heatmap generation and evidence output
 ```
 
-## Technology stack
+## Tech stack
 
-- Frontend: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Recharts.
-- Backend: FastAPI, Uvicorn, Python 3.11, OpenCV, PyTorch, `timm`, FaceNet-PyTorch, Grad-CAM, ONNX Runtime.
-- Database: MongoDB 7.
-- Deployment: Docker Compose.
+- Frontend: React 18, Vite, TypeScript, Tailwind CSS, Framer Motion
+- Backend: FastAPI, Uvicorn, Python, OpenCV, PyTorch, timm, ONNX Runtime
+- Database: MongoDB
+- Deployment: Docker Compose
 
 ## Project structure
 
@@ -43,51 +65,37 @@ FastAPI inference backend ---- MongoDB scan history
 AI_Based_deepfake_detection/
 ├── backend/
 │   ├── app/
-│   │   ├── core/                 # Settings and environment configuration
-│   │   ├── models/               # Pydantic request/response schemas
-│   │   └── services/             # Prediction, face detection, heatmaps, history
-│   ├── static/uploads/           # Uploaded media (created at runtime)
-│   ├── static/heatmaps/          # Generated evidence images (created at runtime)
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   ├── core/                  # settings and environment config
+│   │   ├── models/                # Pydantic schemas
+│   │   └── services/              # predictor, history, heatmap, face detection, progress
+│   ├── static/
+│   │   ├── uploads/               # generated upload storage
+│   │   ├── heatmaps/              # generated heatmap images
+│   │   └── weights/               # model weights and ONNX exports
+│   ├── training/                  # pretrained model training pipeline
+│   ├── tests/                     # regression tests
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/           # Shared UI components
-│   │   ├── context/              # Scan and theme state
-│   │   ├── lib/                  # API, session, types, and mock helpers
-│   │   └── pages/                # Landing, upload, processing, results, history
-│   ├── Dockerfile
-│   └── package.json
-└── docker-compose.yml
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── lib/
+│   │   └── pages/
+│   ├── package.json
+│   └── Dockerfile
+├── docker-compose.yml
+├── .env.example
+├── .gitignore
+├── README.md
+└── .venv/
 ```
 
-## Run with Docker
-
-From this directory, run:
-
-```powershell
-docker compose up --build
-```
-
-Open the frontend at `http://localhost:5173` and the API at `http://localhost:8000`. The FastAPI interactive documentation is available at `http://localhost:8000/docs`.
-
-Stop the services with:
-
-```powershell
-docker compose down
-```
-
-MongoDB data is stored in the `mongo_data` Docker volume. Remove it only when you intentionally want to delete scan history:
-
-```powershell
-docker compose down -v
-```
-
-## Run locally
+## Local run
 
 ### Backend
 
-Requires Python 3.11 or newer. From `backend/`:
+From the backend folder:
 
 ```powershell
 python -m venv .venv
@@ -96,68 +104,77 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-The local backend expects MongoDB at `mongodb://localhost:27017` by default. Start MongoDB separately, or use the MongoDB service from Docker Compose.
-
 ### Frontend
 
-From `frontend/`:
+From the frontend folder:
 
 ```powershell
 npm install
 npm run dev
 ```
 
-The frontend uses `http://localhost:8000` by default. Set `VITE_API_BASE_URL` before starting Vite to use another backend URL:
+By default the frontend expects the backend at `http://localhost:8000`.
 
-```powershell
-$env:VITE_API_BASE_URL = "http://localhost:8000"
-npm run dev
-```
-
-Other frontend commands:
+### Build check
 
 ```powershell
 npm run build
-npm run preview
 ```
 
-## Configuration
-
-Backend settings can be supplied through environment variables or a `.env` file in `backend/`:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `MONGO_URI` | `mongodb://localhost:27017` | MongoDB connection string |
-| `MONGO_DB` | `deepfake_scans` | MongoDB database name |
-| `CORS_ORIGINS` | `http://localhost:5173` | Allowed frontend origins |
-| `MODEL_BACKBONE` | `efficientnet_b4` | `timm` model name |
-| `CONFIDENCE_THRESHOLD` | `0.5` | Fake verdict threshold |
-
-Docker Compose sets the MongoDB connection and CORS origin for the container network.
-
-## Model weights
-
-The backend looks for optional weights under `backend/static/weights/`:
-
-- `efficientnet_b4.pt` for the PyTorch path.
-- `efficientnet_b4.onnx` for the ONNX Runtime fallback.
-
-When no compatible weights are present, the predictor uses its OpenCV-based heuristic adapter and includes a note in the result. The configured transparency metadata currently describes EfficientNet-B4, FaceForensics++, and Celeb-DF v2; these values should be updated when the final trained model is selected.
-
-## API endpoints
+## Current API endpoints
 
 | Method | Endpoint | Description |
 | --- | --- | --- |
-| `GET` | `/health` | Service health check |
-| `GET` | `/model-metadata` | Model and evaluation metadata |
-| `POST` | `/predict` | Analyze an uploaded image or video using `file` multipart data |
-| `GET` | `/predict/{scan_id}/status` | Read processing progress for a scan |
-| `GET` | `/history` | List recent scans for the current `X-Session-Id` |
+| GET | `/health` | service health |
+| GET | `/model-metadata` | model and evaluation metadata |
+| POST | `/predict` | analyze uploaded media |
+| POST | `/predict/start` | start async job and return scan id |
+| GET | `/predict/{scan_id}/status` | read processing progress |
+| GET | `/predict/{scan_id}/result` | fetch final scan result |
+| GET | `/history` | list recent session history |
 
-The prediction and history routes accept an optional `X-Session-Id` header. The frontend creates and reuses this identifier to keep browser history scoped to one session.
+## Model training status
 
-## Development notes
+The repo now contains a real pretrained-model training scaffold in:
 
-- Video files are sampled at up to eight frames rather than analyzed frame by frame.
-- Uploaded files and generated heatmaps are written to `backend/static/`.
-- The model adapter is intentionally replaceable; connect validated weights before using this system for real decisions.
+- [backend/training/train_deepfake_classifier.py](backend/training/train_deepfake_classifier.py)
+
+This training script:
+
+- uses a pretrained timm backbone such as EfficientNet-B4
+- trains a binary real/fake classifier on face crops
+- validates the model
+- exports the final model to ONNX
+
+This is the next required milestone before the application can be treated as a dependable deepfake detector.
+
+## Dataset requirement for the next milestone
+
+To complete the real detector, the next step is to collect a labeled dataset and train on it.
+
+Recommended initial datasets:
+
+- FaceForensics++
+- Celeb-DF v2
+- DFDC (later expansion)
+
+The model should be trained on face crops with labels:
+
+- `real`
+- `fake`
+
+and then validated with a held-out set.
+
+## Notes
+
+- The backend keeps a heuristic fallback when no real model weights are present, but it is not production-grade forensic inference.
+- The app is now ready for real model integration, not just demo flow.
+- The final objective is to replace the heuristic path with a validated pretrained backbone and export it to ONNX for runtime inference.
+
+## Next recommended milestone
+
+1. Download and prepare a labeled deepfake dataset
+2. Train a pretrained backbone on real/fake face crops
+3. Export the trained model to ONNX
+4. Replace the heuristic inference path in the backend
+5. Validate the full upload → analysis → result → history flow with real data
