@@ -67,7 +67,7 @@ The application consists of three major modules:
 
 # 📂 Project Structure
 
-```text
+
 DeepFake-Detection/
 │
 ├── ml-core/
