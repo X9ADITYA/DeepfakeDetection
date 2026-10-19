@@ -22,7 +22,7 @@ The application consists of three major modules:
 - 🧠 Machine Learning Engine
 - ⚙️ REST API Backend
 - 💻 React Web Interface with vite
-- 
+- Model Training with gpu
 
 ---
 
